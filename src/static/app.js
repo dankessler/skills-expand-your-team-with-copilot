@@ -296,7 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Define time slots (6 AM to 6 PM, every hour)
     const timeSlots = [];
     for (let hour = 6; hour <= 18; hour++) {
-      const displayHour = hour > 12 ? hour - 12 : hour;
+      const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
       const period = hour >= 12 ? "PM" : "AM";
       timeSlots.push({
         display: `${displayHour}:00 ${period}`,
@@ -503,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const formatTime = (time24) => {
         const [hours, minutes] = time24.split(":").map((num) => parseInt(num));
         const period = hours >= 12 ? "PM" : "AM";
-        const displayHours = hours === 0 || hours > 12 ? (hours === 0 ? 12 : hours - 12) : hours;
+        const displayHours = hours % 12 || 12;
         return `${displayHours}:${minutes
           .toString()
           .padStart(2, "0")} ${period}`;
