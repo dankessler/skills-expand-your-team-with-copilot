@@ -29,6 +29,14 @@ def get_activities(
     - end_time: Filter activities ending at or before this time (24-hour format, e.g., '17:00')
     - difficulty: Filter by difficulty level ('Beginner', 'Intermediate', 'Advanced', or 'all' for activities with no difficulty)
     """
+    # Validate difficulty parameter
+    allowed_difficulties = ['Beginner', 'Intermediate', 'Advanced', 'all']
+    if difficulty and difficulty not in allowed_difficulties:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid difficulty value. Must be one of: {', '.join(allowed_difficulties)}"
+        )
+    
     # Build the query based on provided filters
     query = {}
     

@@ -519,8 +519,9 @@ document.addEventListener("DOMContentLoaded", () => {
       </span>
     `;
 
-    // Create difficulty badge (only if difficulty is specified)
-    const difficultyBadgeHtml = details.difficulty ? `
+    // Create difficulty badge (only if difficulty is specified and is valid)
+    const allowedDifficulties = ['Beginner', 'Intermediate', 'Advanced'];
+    const difficultyBadgeHtml = details.difficulty && allowedDifficulties.includes(details.difficulty) ? `
       <span class="difficulty-badge difficulty-${details.difficulty.toLowerCase()}">
         ${details.difficulty}
       </span>
