@@ -348,13 +348,14 @@ document.addEventListener("DOMContentLoaded", () => {
           const activityStartsInSlot =
             startHour >= slotStart && startHour < slotEnd;
           const activitySpansSlot = startHour <= slotStart && endHour > slotStart;
+          const activityEndsInSlot = endHour > slotStart && endHour <= slotEnd;
 
-          if (activityStartsInSlot || activitySpansSlot) {
+          if (activityStartsInSlot || activitySpansSlot || activityEndsInSlot) {
             // Calculate activity duration in hours
             const durationHours =
               endHour - startHour + (endMin - startMin) / 60;
-            const topOffset = ((startHour + startMin / 60 - slotStart) / 1) * 100;
-            const height = (durationHours / 1) * 60; // Height per hour slot
+            const topOffset = (startHour + startMin / 60 - slotStart) * 100;
+            const height = durationHours * 60; // Height per hour slot
 
             activitiesInSlot.push({
               name,
@@ -397,7 +398,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
           calendarHTML += `
             <div class="calendar-activity ${overlappingClass}" 
-                 style="background: linear-gradient(135deg, ${typeInfo.color}, ${typeInfo.textColor}); 
+                 style="background: linear-gradient(135deg, ${typeInfo.color}, ${typeInfo.color}); 
+                        color: ${typeInfo.textColor};
                         top: ${topOffset}%; 
                         height: ${Math.max(height, 60)}px;"
                  data-activity="${name}">
@@ -501,7 +503,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const formatTime = (time24) => {
         const [hours, minutes] = time24.split(":").map((num) => parseInt(num));
         const period = hours >= 12 ? "PM" : "AM";
-        const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+        const displayHours = hours === 0 || hours > 12 ? (hours === 0 ? 12 : hours - 12) : hours;
         return `${displayHours}:${minutes
           .toString()
           .padStart(2, "0")} ${period}`;
