@@ -24,6 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // DOM elements
   const activitiesList = document.getElementById("activities-list");
+  const calendarView = document.getElementById("calendar-view");
+  const cardViewBtn = document.getElementById("card-view-btn");
+  const calendarViewBtn = document.getElementById("calendar-view-btn");
   const messageDiv = document.getElementById("message");
   const registrationModal = document.getElementById("registration-modal");
   const modalActivityName = document.getElementById("modal-activity-name");
@@ -63,6 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchQuery = "";
   let currentDay = "";
   let currentTimeRange = "";
+  let currentView = "card"; // 'card' or 'calendar'
 
   // Authentication state
   let currentUser = null;
@@ -277,6 +281,217 @@ document.addEventListener("DOMContentLoaded", () => {
     await login(username, password);
   });
 
+  // View toggle functions
+  function switchToCardView() {
+    currentView = "card";
+    activitiesList.classList.remove("hidden");
+    calendarView.classList.add("hidden");
+    cardViewBtn.classList.add("active");
+    calendarViewBtn.classList.remove("active");
+  }
+
+  function switchToCalendarView() {
+    currentView = "calendar";
+    activitiesList.classList.add("hidden");
+    calendarView.classList.remove("hidden");
+    cardViewBtn.classList.remove("active");
+    calendarViewBtn.classList.add("active");
+    renderCalendarView();
+  }
+
+  // Event listeners for view toggle
+  cardViewBtn.addEventListener("click", switchToCardView);
+  calendarViewBtn.addEventListener("click", switchToCalendarView);
+
+  // Calendar view rendering
+  function renderCalendarView() {
+    // Define the days of the week
+    const daysOfWeek = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ];
+
+    // Define time slots (6 AM to 6 PM, every hour)
+    const timeSlots = [];
+    for (let hour = 6; hour <= 18; hour++) {
+      const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+      const period = hour >= 12 ? "PM" : "AM";
+      timeSlots.push({
+        display: `${displayHour}:00 ${period}`,
+        hour: hour,
+      });
+    }
+
+    // Create calendar grid
+    let calendarHTML = '<div class="calendar-grid">';
+
+    // Header row
+    calendarHTML += '<div class="calendar-header">Time</div>';
+    daysOfWeek.forEach((day) => {
+      calendarHTML += `<div class="calendar-header">${day}</div>`;
+    });
+
+    // Get filtered activities
+    const filteredActivities = getFilteredActivities();
+
+    // Time slot rows
+    timeSlots.forEach((timeSlot) => {
+      calendarHTML += `<div class="calendar-time-slot">${timeSlot.display}</div>`;
+
+      // For each day of the week
+      daysOfWeek.forEach((day) => {
+        calendarHTML += '<div class="calendar-cell">';
+
+        // Find activities for this day and time slot
+        const activitiesInSlot = [];
+
+        Object.entries(filteredActivities).forEach(([name, details]) => {
+          if (!details.schedule_details) return;
+
+          const activityDays = details.schedule_details.days;
+          const startTime = details.schedule_details.start_time;
+          const endTime = details.schedule_details.end_time;
+
+          // Check if activity is on this day
+          if (!activityDays.includes(day)) return;
+
+          // Parse times
+          const [startHour, startMin] = startTime.split(":").map(Number);
+          const [endHour, endMin] = endTime.split(":").map(Number);
+
+          // Check if activity overlaps with this time slot
+          const slotStart = timeSlot.hour;
+          const slotEnd = timeSlot.hour + 1;
+
+          const activityStartsInSlot =
+            startHour >= slotStart && startHour < slotEnd;
+          const activitySpansSlot = startHour <= slotStart && endHour > slotStart;
+          const activityEndsInSlot = endHour > slotStart && endHour <= slotEnd;
+
+          if (activityStartsInSlot || activitySpansSlot || activityEndsInSlot) {
+            // Calculate activity duration in hours
+            const durationHours =
+              endHour - startHour + (endMin - startMin) / 60;
+            const topOffset = (startHour + startMin / 60 - slotStart) * 100;
+            const height = durationHours * 60; // Height per hour slot
+
+            activitiesInSlot.push({
+              name,
+              details,
+              topOffset,
+              height,
+              startHour,
+              startMin,
+            });
+          }
+        });
+
+        // Render activities in this slot
+        activitiesInSlot.forEach((activity, index) => {
+          const { name, details, topOffset, height } = activity;
+          const activityType = getActivityType(name, details.description);
+          const typeInfo = activityTypes[activityType];
+
+          const takenSpots = details.participants.length;
+          const totalSpots = details.max_participants;
+
+          // Apply overlapping class if multiple activities
+          let overlappingClass = "";
+          if (activitiesInSlot.length === 2) {
+            overlappingClass = "overlapping";
+          } else if (activitiesInSlot.length >= 3) {
+            overlappingClass = "overlapping-three";
+          }
+
+          // Format time
+          const formatTime = (time24) => {
+            const [hours, minutes] = time24.split(":").map((num) => parseInt(num));
+            const period = hours >= 12 ? "PM" : "AM";
+            const displayHours = hours % 12 || 12;
+            return `${displayHours}:${minutes.toString().padStart(2, "0")} ${period}`;
+          };
+
+          const startTime = formatTime(details.schedule_details.start_time);
+          const endTime = formatTime(details.schedule_details.end_time);
+
+          calendarHTML += `
+            <div class="calendar-activity ${overlappingClass}" 
+                 style="background: linear-gradient(135deg, ${typeInfo.color}, ${typeInfo.color}); 
+                        color: ${typeInfo.textColor};
+                        top: ${topOffset}%; 
+                        height: ${Math.max(height, 60)}px;"
+                 data-activity="${name}">
+              <div class="calendar-activity-name">${name}</div>
+              <div class="calendar-activity-enrollment">${takenSpots}/${totalSpots}</div>
+              <div class="activity-tooltip">
+                <div class="activity-tooltip-title">${name}</div>
+                <div class="activity-tooltip-description">${details.description}</div>
+                <div class="activity-tooltip-time">${startTime} - ${endTime}</div>
+                <div class="activity-tooltip-time">Enrolled: ${takenSpots}/${totalSpots}</div>
+              </div>
+            </div>
+          `;
+        });
+
+        calendarHTML += "</div>";
+      });
+    });
+
+    calendarHTML += "</div>";
+
+    calendarView.innerHTML = calendarHTML;
+  }
+
+  // Helper function to get filtered activities (shared between card and calendar view)
+  function getFilteredActivities() {
+    let filteredActivities = {};
+
+    Object.entries(allActivities).forEach(([name, details]) => {
+      const activityType = getActivityType(name, details.description);
+
+      // Apply category filter
+      if (currentFilter !== "all" && activityType !== currentFilter) {
+        return;
+      }
+
+      // Apply weekend filter if selected
+      if (currentTimeRange === "weekend" && details.schedule_details) {
+        const activityDays = details.schedule_details.days;
+        const isWeekendActivity = activityDays.some((day) =>
+          timeRanges.weekend.days.includes(day)
+        );
+
+        if (!isWeekendActivity) {
+          return;
+        }
+      }
+
+      // Apply search filter
+      const searchableContent = [
+        name.toLowerCase(),
+        details.description.toLowerCase(),
+        formatSchedule(details).toLowerCase(),
+      ].join(" ");
+
+      if (
+        searchQuery &&
+        !searchableContent.includes(searchQuery.toLowerCase())
+      ) {
+        return;
+      }
+
+      // Activity passed all filters, add to filtered list
+      filteredActivities[name] = details;
+    });
+
+    return filteredActivities;
+  }
+
   // Show loading skeletons
   function showLoadingSkeletons() {
     activitiesList.innerHTML = "";
@@ -311,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const formatTime = (time24) => {
         const [hours, minutes] = time24.split(":").map((num) => parseInt(num));
         const period = hours >= 12 ? "PM" : "AM";
-        const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12 AM
+        const displayHours = hours % 12 || 12;
         return `${displayHours}:${minutes
           .toString()
           .padStart(2, "0")} ${period}`;
@@ -437,46 +652,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Clear the activities list
     activitiesList.innerHTML = "";
 
-    // Apply client-side filtering - this handles category filter and search, plus weekend filter
-    let filteredActivities = {};
-
-    Object.entries(allActivities).forEach(([name, details]) => {
-      const activityType = getActivityType(name, details.description);
-
-      // Apply category filter
-      if (currentFilter !== "all" && activityType !== currentFilter) {
-        return;
-      }
-
-      // Apply weekend filter if selected
-      if (currentTimeRange === "weekend" && details.schedule_details) {
-        const activityDays = details.schedule_details.days;
-        const isWeekendActivity = activityDays.some((day) =>
-          timeRanges.weekend.days.includes(day)
-        );
-
-        if (!isWeekendActivity) {
-          return;
-        }
-      }
-
-      // Apply search filter
-      const searchableContent = [
-        name.toLowerCase(),
-        details.description.toLowerCase(),
-        formatSchedule(details).toLowerCase(),
-      ].join(" ");
-
-      if (
-        searchQuery &&
-        !searchableContent.includes(searchQuery.toLowerCase())
-      ) {
-        return;
-      }
-
-      // Activity passed all filters, add to filtered list
-      filteredActivities[name] = details;
-    });
+    // Get filtered activities
+    const filteredActivities = getFilteredActivities();
 
     // Check if there are any results
     if (Object.keys(filteredActivities).length === 0) {
@@ -493,6 +670,11 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(filteredActivities).forEach(([name, details]) => {
       renderActivityCard(name, details);
     });
+
+    // If we're in calendar view, update that too
+    if (currentView === "calendar") {
+      renderCalendarView();
+    }
   }
 
   // Function to render a single activity card

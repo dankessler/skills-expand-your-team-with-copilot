@@ -10,6 +10,14 @@
     <header>
       <h1>Mergington High School</h1>
       <h2>Extracurricular Activities</h2>
+      <div id="view-toggle">
+        <button id="card-view-btn" class="view-toggle-btn active">
+          <span>📋</span> Card View
+        </button>
+        <button id="calendar-view-btn" class="view-toggle-btn">
+          <span>📅</span> Calendar View
+        </button>
+      </div>
       <div id="user-controls">
         <button id="theme-toggle" aria-label="Toggle dark mode">
           <span id="theme-icon">🌙</span>
@@ -109,6 +117,9 @@
             <div id="activities-list">
               <!-- Activities will be loaded here -->
               <p>Loading activities...</p>
+            </div>
+            <div id="calendar-view" class="hidden">
+              <!-- Calendar view will be loaded here -->
             </div>
             <div id="message" class="hidden message"></div>
           </div>
