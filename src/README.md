@@ -5,7 +5,7 @@ A website application that allows students to view extracurricular activities an
 ## Features
 
 ### For Students
-- View all available extracurricular activities with detailed information
+- View all available extracurricular activities with descriptions, schedules, and participant counts
 - Search activities by name or description
 - Filter activities by:
   - Category (Sports, Arts, Academic, Community, Technology)
