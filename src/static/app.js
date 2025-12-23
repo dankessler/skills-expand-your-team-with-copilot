@@ -495,6 +495,29 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Function to generate social sharing URLs
+  function generateShareUrls(activityName, description, schedule) {
+    const pageUrl = encodeURIComponent(window.location.href);
+    const shareText = encodeURIComponent(`Check out ${activityName} at Mergington High School! ${description} Schedule: ${schedule}`);
+    const activityTitle = encodeURIComponent(activityName);
+    
+    return {
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}`,
+      twitter: `https://twitter.com/intent/tweet?text=${shareText}&url=${pageUrl}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}`,
+      email: `mailto:?subject=${activityTitle}&body=${shareText}%0A%0A${pageUrl}`
+    };
+  }
+
+  // Function to handle social sharing
+  function handleShare(platform, url) {
+    if (platform === 'email') {
+      window.location.href = url;
+    } else {
+      window.open(url, '_blank', 'width=600,height=400');
+    }
+  }
+
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
@@ -522,6 +545,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // Format the schedule using the new helper function
     const formattedSchedule = formatSchedule(details);
 
+    // Generate social sharing URLs
+    const shareUrls = generateShareUrls(name, details.description, formattedSchedule);
+
     // Create activity tag
     const tagHtml = `
       <span class="activity-tag" style="background-color: ${typeInfo.color}; color: ${typeInfo.textColor}">
@@ -542,6 +568,25 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    // Create social sharing buttons
+    const shareButtons = `
+      <div class="share-buttons">
+        <span class="share-label">Share:</span>
+        <button class="share-button share-facebook" data-platform="facebook" data-url="${shareUrls.facebook}" title="Share on Facebook" aria-label="Share on Facebook">
+          <span class="share-icon" aria-hidden="true">f</span>
+        </button>
+        <button class="share-button share-twitter" data-platform="twitter" data-url="${shareUrls.twitter}" title="Share on Twitter" aria-label="Share on Twitter">
+          <span class="share-icon" aria-hidden="true">X</span>
+        </button>
+        <button class="share-button share-linkedin" data-platform="linkedin" data-url="${shareUrls.linkedin}" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+          <span class="share-icon" aria-hidden="true">in</span>
+        </button>
+        <button class="share-button share-email" data-platform="email" data-url="${shareUrls.email}" title="Share via Email" aria-label="Share via Email">
+          <span class="share-icon" aria-hidden="true">@</span>
+        </button>
+      </div>
+    `;
+
     activityCard.innerHTML = `
       ${tagHtml}
       <h4>${name}</h4>
@@ -551,6 +596,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
       ${capacityIndicator}
+      ${shareButtons}
       <div class="participants-list">
         <h5>Current Participants:</h5>
         <ul>
@@ -598,6 +644,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
+    });
+
+    // Add click handlers for share buttons
+    const shareButtonElements = activityCard.querySelectorAll(".share-button");
+    shareButtonElements.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        const platform = button.dataset.platform;
+        const url = button.dataset.url;
+        handleShare(platform, url);
+      });
     });
 
     // Add click handler for register button (only when authenticated)
