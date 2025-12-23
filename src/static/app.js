@@ -549,17 +549,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const shareButtons = `
       <div class="share-buttons">
         <span class="share-label">Share:</span>
-        <button class="share-button share-facebook" data-platform="facebook" data-url="${shareUrls.facebook}" title="Share on Facebook">
-          <span class="share-icon">f</span>
+        <button class="share-button share-facebook" data-platform="facebook" data-url="${shareUrls.facebook}" title="Share on Facebook" aria-label="Share on Facebook">
+          <span class="share-icon" aria-hidden="true">f</span>
         </button>
-        <button class="share-button share-twitter" data-platform="twitter" data-url="${shareUrls.twitter}" title="Share on Twitter">
-          <span class="share-icon">𝕏</span>
+        <button class="share-button share-twitter" data-platform="twitter" data-url="${shareUrls.twitter}" title="Share on Twitter" aria-label="Share on Twitter">
+          <span class="share-icon" aria-hidden="true">X</span>
         </button>
-        <button class="share-button share-linkedin" data-platform="linkedin" data-url="${shareUrls.linkedin}" title="Share on LinkedIn">
-          <span class="share-icon">in</span>
+        <button class="share-button share-linkedin" data-platform="linkedin" data-url="${shareUrls.linkedin}" title="Share on LinkedIn" aria-label="Share on LinkedIn">
+          <span class="share-icon" aria-hidden="true">in</span>
         </button>
-        <button class="share-button share-email" data-platform="email" data-url="${shareUrls.email}" title="Share via Email">
-          <span class="share-icon">✉</span>
+        <button class="share-button share-email" data-platform="email" data-url="${shareUrls.email}" title="Share via Email" aria-label="Share via Email">
+          <span class="share-icon" aria-hidden="true">@</span>
         </button>
       </div>
     `;
